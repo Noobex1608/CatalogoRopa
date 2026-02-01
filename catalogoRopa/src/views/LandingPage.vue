@@ -3,228 +3,197 @@ import { RouterLink } from 'vue-router'
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 
-const cartCount = ref(0)
+const cartCount = ref(2)
 
+// He actualizado la imagen en todas las categorías como pediste
 const categorias = [
   {
-    titulo: 'Catálogo Completo',
-    descripcion: 'Explora nuestra colección completa de camisas para todas las ocasiones',
-    imagen: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&h=600&fit=crop',
+    titulo: 'Equipos Réplicas ',
+    subtitulo: 'Fútbol',
+    descripcion: 'Camisetas oficiales y retro.',
+    // Imagen actualizada
+    imagen: 'https://image.made-in-china.com/2f0j00fbAourqcaEkY/Custom-New-Sublimated-Polyester-Soccer-Jersey-Set-Classic-Polyester-Quick-Dry-Football-Shirt.webp',
     ruta: '/catalogo',
-    color: 'from-blue-600 to-blue-800',
-    icono: 'mdi:hanger'
+    accent: 'text-blue-200',
+    // Ajusté la opacidad a /90 para que tape un poco más las rayas donde hay texto
+    gradient: 'from-[#002B42]/95 via-[#005F7F]/60 to-transparent',
+    icono: 'mdi:tshirt-crew'
   },
   {
-    titulo: 'Camisas Estampadas',
-    descripcion: 'Diseños únicos y modernos con estampados vibrantes y creativos',
-    imagen: 'https://images.unsplash.com/photo-1622445275576-721325763afe?w=800&h=600&fit=crop',
+    titulo: 'Estampados',
+    subtitulo: 'Personalización',
+    descripcion: 'Vinilo y DTF a tu gusto.',
+    // Imagen actualizada
+    imagen: 'https://reclamosbello.com/wp-content/uploads/2023/09/img-tazas.jpg',
     ruta: '/camisas-estampadas',
-    color: 'from-orange-500 to-red-600',
-    icono: 'mdi:palette'
+    accent: 'text-teal-200',
+    // Ajusté la opacidad a /90 para que tape un poco más las rayas donde hay texto
+    gradient: 'from-[#005F7F]/95 via-[#009DAE]/60 to-transparent',
+    icono: 'mdi:printer-3d-nozzle'
   },
   {
-    titulo: 'Camisas Bordadas',
-    descripcion: 'Elegancia artesanal con bordados delicados hechos a mano',
-    imagen: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&h=600&fit=crop',
+    titulo: 'Bordados',
+    subtitulo: 'Alta Costura',
+    descripcion: 'Detalles que duran siempre.',
+    // Imagen actualizada
+    imagen: 'https://image.made-in-china.com/2f0j00VneoBTySZfga/Customized-Denim-Fabric-Washed-Cotton-Embroidery-Baseball-Caps-with-Metal-Hat.webp',
     ruta: '/camisas-bordadas',
-    color: 'from-purple-600 to-pink-600',
-    icono: 'mdi:sparkles'
+    accent: 'text-emerald-200',
+    // Ajusté la opacidad a /90 para que tape un poco más las rayas donde hay texto
+    gradient: 'from-[#009DAE]/95 via-[#4DBCC8]/60 to-transparent',
+    icono: 'mdi:needle'
   }
 ]
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-orange-50">
-    <!-- Header Minimalista -->
-    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between">
-          <!-- Logo -->
-          <div class="text-3xl tracking-tighter">
-            <span class="font-black text-orange-500 uppercase">Camisa</span><span class="font-extralight text-blue-800">STORE</span>
+  <div class="min-h-screen bg-[#EAECE9] font-sans overflow-x-hidden relative">
+    
+    <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#005F7F]/20 rounded-full blur-[100px] animate-pulse"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#009DAE]/15 rounded-full blur-[120px]"></div>
+    <div class="fixed inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#002B42 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+    <header class="fixed w-full top-4 z-50 px-4">
+      <div class="max-w-5xl mx-auto bg-white/70 backdrop-blur-xl border border-white/40 shadow-lg rounded-full px-6 py-3 flex items-center justify-between relative">
+        
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <div class="w-8 h-8 bg-[#002B42] text-white rounded-full flex items-center justify-center shadow-lg">
+            <span class="font-bold">C</span>
           </div>
-          
-          <!-- Actions -->
-          <div class="flex items-center gap-6">
-            <a href="#" class="text-sm font-medium text-gray-700 hover:text-blue-800 transition-colors">
-              Mi Cuenta
-            </a>
-            <div class="relative">
-              <button class="flex items-center transition-all hover:scale-110 text-gray-700 hover:text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <span v-if="cartCount > 0" class="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                  {{ cartCount }}
-                </span>
-              </button>
-            </div>
-          </div>
+          <span class="font-bold text-[#002B42] tracking-tight text-lg hidden sm:block">Camisa<span class="font-light text-[#009DAE]">STORE</span></span>
+        </div>
+
+        <nav class="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 items-center gap-6 text-sm font-medium text-[#005F7F]">
+          <span class="bg-white/50 px-4 py-1 rounded-full border border-transparent cursor-default select-none text-[#002B42]">
+            Colecciones
+          </span>
+        </nav>
+
+        <div class="flex items-center flex-shrink-0">
+          <button class="flex items-center gap-2 bg-[#002B42] hover:bg-[#009DAE] text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 group">
+            <span class="font-bold text-sm tracking-wide hidden sm:block">Contáctanos</span>
+            <Icon icon="mdi:whatsapp" class="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300" />
+          </button>
         </div>
       </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="relative overflow-hidden py-20 lg:py-32">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-          <!-- Badge -->
-          <div class="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6 animate-pulse">
-            <span class="relative flex h-2 w-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            Nueva Colección 2026
+    <section class="relative pt-32 pb-32 lg:pt-40 lg:pb-48 bg-[#002B42] text-white rounded-b-[3rem] lg:rounded-b-[5rem] shadow-2xl overflow-hidden">
+      <div class="absolute top-0 right-0 w-full h-full opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+      
+      <div class="relative max-w-7xl mx-auto px-6 text-center z-10">
+        <span class="inline-block py-1 px-3 rounded-full bg-[#009DAE]/20 text-[#009DAE] text-xs font-bold tracking-wider mb-4 border border-[#009DAE]/30 backdrop-blur-sm">
+          NUEVA TEMPORADA 2026
+        </span>
+        
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight tracking-tight">
+          Viste tu <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#4DBCC8] to-[#009DAE]">Identidad</span>
+        </h1>
+        
+        <p class="text-lg text-blue-100/80 max-w-2xl mx-auto mb-8 font-light leading-relaxed">
+          Desde réplicas exactas hasta bordados y estampados. Calidad premium en cada detalle.
+        </p>
+
+        <div class="flex justify-center gap-8 text-sm font-medium text-blue-200/60">
+          <div class="flex items-center gap-2">
+            <Icon icon="mdi:check-decagram" class="text-[#4DBCC8]" /> Calidad 100%
           </div>
-          
-          <!-- Título Principal -->
-          <h1 class="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 mb-6 tracking-tight leading-tight md:leading-tight">
-            Estilo que
-            <span class="bg-gradient-to-r from-orange-500 to-blue-800 bg-clip-text text-transparent">
-              Habla por Ti
-            </span>
-          </h1>
-          
-          <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto font-light">
-            Descubre camisas únicas que combinan calidad premium, diseños exclusivos y artesanía excepcional
-          </p>
-          
-          <!-- CTAs -->
-          <div class="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-            <router-link 
-              to="/catalogo" 
-              class="px-8 py-4 bg-blue-800 text-white rounded-full font-bold text-lg shadow-xl hover:shadow-blue-200 hover:bg-blue-900 hover:-translate-y-1 transition-all"
-            >
-              Ver Catálogo
-            </router-link>
-            <router-link 
-              to="/camisas-estampadas" 
-              class="px-8 py-4 bg-white text-blue-800 border-2 border-blue-800 rounded-full font-bold text-lg hover:bg-blue-50 hover:-translate-y-1 transition-all"
-            >
-              Ver Ofertas
-            </router-link>
-          </div>
-          
-          <!-- Stats -->
-          <div class="flex flex-wrap justify-center gap-8 md:gap-12 mb-12">
-            <div class="text-center">
-              <div class="text-3xl md:text-4xl font-bold text-blue-800">30+</div>
-              <div class="text-sm text-gray-600 mt-1">Productos</div>
-            </div>
-            <div class="text-center">
-              <div class="text-3xl md:text-4xl font-bold text-orange-500">100%</div>
-              <div class="text-sm text-gray-600 mt-1">Calidad</div>
-            </div>
-            <div class="text-center">
-              <div class="text-3xl md:text-4xl font-bold text-purple-600">24/7</div>
-              <div class="text-sm text-gray-600 mt-1">Soporte</div>
-            </div>
+          <div class="flex items-center gap-2">
+            <Icon icon="mdi:arrow-top" class="text-[#4DBCC8]" /> +100 productos
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Categorías Grid -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Explora Nuestras Colecciones
-          </h2>
-          <p class="text-gray-600 text-lg">
-            Elige la categoría que mejor se adapte a tu estilo
-          </p>
+    <main class="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 -mt-20 lg:-mt-24 pb-20">
+      
+      <div class="grid md:grid-cols-3 gap-6">
+  <router-link
+    v-for="(cat, index) in categorias"
+    :key="cat.ruta"
+    :to="cat.ruta"
+    class="group relative h-[420px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/20 transition-all duration-500 hover:-translate-y-3 hover:shadow-xl hover:shadow-[#009DAE]/20"
+  >
+    <img 
+      :src="cat.imagen" 
+      :alt="cat.titulo"
+      class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+    />
+    
+    <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+
+    <div class="absolute inset-0 p-6 flex flex-col justify-between">
+      <div class="flex justify-between items-start">
+        <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:bg-[#009DAE] group-hover:border-[#009DAE] transition-all duration-300">
+          <Icon :icon="cat.icono" class="w-6 h-6 text-white" />
         </div>
+        <Icon icon="mdi:arrow-top-right" class="text-white/50 w-6 h-6 group-hover:text-[#009DAE] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+      </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <router-link
-            v-for="categoria in categorias"
-            :key="categoria.ruta"
-            :to="categoria.ruta"
-            class="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 bg-white"
-          >
-            <!-- Imagen de fondo -->
-            <div class="aspect-[4/3] overflow-hidden bg-gray-200">
-              <img
-                :src="categoria.imagen"
-                :alt="categoria.titulo"
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <!-- Overlay gradiente -->
-              <div 
-                class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent group-hover:from-black/90 transition-all"
-                :class="categoria.color"
-              ></div>
-            </div>
-
-            <!-- Contenido -->
-            <div class="absolute inset-0 flex flex-col justify-end p-6 text-white">
-              <div class="mb-3 transform group-hover:scale-110 transition-transform drop-shadow-lg">
-                <Icon :icon="categoria.icono" class="text-5xl" />
-              </div>
-              <h3 class="text-2xl font-bold mb-2 transform group-hover:translate-x-2 transition-transform" style="text-shadow: 2px 2px 8px rgba(0,0,0,0.5);">
-                {{ categoria.titulo }}
-              </h3>
-              <p class="text-white/90 text-sm mb-4 transform group-hover:translate-x-2 transition-transform">
-                {{ categoria.descripcion }}
-              </p>
-              
-              <!-- Botón -->
-              <div class="flex items-center gap-2 font-semibold transform group-hover:translate-x-2 transition-transform">
-                <span>Explorar colección</span>
-                <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </div>
-            </div>
-
-            <!-- Indicador de hover -->
-            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </router-link>
+      <div class="transform transition-transform duration-300 group-hover:-translate-y-1">
+        <span :class="['text-xs font-bold uppercase tracking-wider mb-2 block pl-1', cat.accent]">
+          {{ cat.subtitulo }}
+        </span>
+        
+        <h3 class="text-3xl font-black text-white mb-2 leading-none drop-shadow-md">
+          {{ cat.titulo }}
+        </h3>
+        
+        <p class="text-gray-300 text-sm line-clamp-2 mb-6 font-medium">
+          {{ cat.descripcion }}
+        </p>
+        
+        <div class="w-full py-3.5 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center gap-2 text-white text-sm font-bold border border-white/10 group-hover:bg-[#009DAE] group-hover:border-[#009DAE] transition-all duration-300">
+          Ver Catálogo
+          <Icon icon="mdi:arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
-    </section>
+    </div>
+  </router-link>
+      </div>
 
-    <!-- Features Section -->
-    <section class="py-20 bg-white/50 backdrop-blur-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-3 gap-8">
-          <div class="text-center p-6 bg-white/50 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg hover:shadow-xl transition-all">
-            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Calidad Premium</h3>
-            <p class="text-gray-600">Algodón 100% orgánico y costuras reforzadas para mayor durabilidad</p>
+      <div class="mt-16 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 flex flex-wrap md:flex-nowrap justify-around gap-6 items-center text-center md:text-left">
+        <div class="flex items-center gap-4 min-w-[200px]">
+          <div class="w-12 h-12 rounded-full bg-blue-50 text-[#002B42] flex items-center justify-center">
+            <Icon icon="mdi:shield-check" class="w-6 h-6" />
           </div>
-          
-          <div class="text-center p-6 bg-white/50 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg hover:shadow-xl transition-all">
-            <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Envío Rápido</h3>
-            <p class="text-gray-600">Entrega garantizada en 2-3 días hábiles a todo el país sin costo adicional</p>
+          <div>
+            <h4 class="font-bold text-[#002B42] text-sm">Pago Seguro</h4>
+            <p class="text-xs text-gray-500">Tarjetas y Transferencias</p>
           </div>
-          
-          <div class="text-center p-6 bg-white/50 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg hover:shadow-xl transition-all">
-            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Pago Seguro</h3>
-            <p class="text-gray-600">Transacciones encriptadas y métodos de pago verificados internacionalmente</p>
+        </div>
+        
+        <div class="w-px h-10 bg-gray-200 hidden md:block"></div>
+
+        <div class="flex items-center gap-4 min-w-[200px]">
+          <div class="w-12 h-12 rounded-full bg-teal-50 text-[#009DAE] flex items-center justify-center">
+            <Icon icon="mdi:package-variant-closed" class="w-6 h-6" />
+          </div>
+          <div>
+            <h4 class="font-bold text-[#002B42] text-sm">Envíos Nacionales</h4>
+            <p class="text-xs text-gray-500">Entrega en todo el país</p>
+          </div>
+        </div>
+
+        <div class="w-px h-10 bg-gray-200 hidden md:block"></div>
+
+        <div class="flex items-center gap-4 min-w-[200px]">
+          <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+            <Icon icon="mdi:whatsapp" class="w-6 h-6" />
+          </div>
+          <div>
+            <h4 class="font-bold text-[#002B42] text-sm">Soporte Directo</h4>
+            <p class="text-xs text-gray-500">Atención personalizada</p>
           </div>
         </div>
       </div>
-    </section>
-
+      
+    </main>
   </div>
 </template>
+
+<style scoped>
+.router-link-active {
+  color: #009DAE;
+}
+</style>
