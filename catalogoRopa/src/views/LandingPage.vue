@@ -8,7 +8,7 @@ const cartCount = ref(2)
 // He actualizado la imagen en todas las categorías como pediste
 const categorias = [
   {
-    titulo: 'Equipos Réplicas ',
+    titulo: 'Réplicas ',
     subtitulo: 'Fútbol',
     descripcion: 'Camisetas oficiales y retro.',
     // Imagen actualizada

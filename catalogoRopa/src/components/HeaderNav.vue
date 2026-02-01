@@ -1,148 +1,112 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { Icon } from '@iconify/vue'
 
 const route = useRoute()
-const cartCount = ref(0)
-const activeSection = ref('inicio')
+
+// Configuración dinámica según la tienda
+const storeConfig = computed(() => {
+  const path = route.path
+  
+  if (path.includes('camisas-estampadas')) {
+    return {
+      main: 'Estampados',
+      sub: 'MODERNOS',
+      colorMain: 'text-amber-500',
+      colorSub: 'text-gray-800',
+      accent: 'bg-amber-500',
+      hoverText: 'hover:text-amber-600',
+      activeBorder: 'bg-amber-500',
+      placeholder: 'Buscar diseño...',
+      icon: 'mdi:printer-3d-nozzle'
+    }
+  } else if (path.includes('camisas-bordadas')) {
+    return {
+      main: 'Bordados',
+      sub: 'ARTESANALES',
+      colorMain: 'text-purple-600',
+      colorSub: 'text-gray-800',
+      accent: 'bg-purple-600',
+      hoverText: 'hover:text-purple-600',
+      activeBorder: 'bg-purple-600',
+      placeholder: 'Buscar bordado...',
+      icon: 'mdi:needle'
+    }
+  } else {
+    // Default (Réplicas/Home)
+    return {
+      main: 'Camisa',
+      sub: 'STORE',
+      colorMain: 'text-[#002B42]',
+      colorSub: 'text-[#009DAE]',
+      accent: 'bg-[#002B42]',
+      hoverText: 'hover:text-[#002B42]',
+      activeBorder: 'bg-[#009DAE]',
+      placeholder: 'Buscar equipo...',
+      icon: 'mdi:tshirt-crew'
+    }
+  }
+})
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm">
-    <!-- Top Bar Informativa -->
-    <div class="bg-blue-900 text-white">
-      <div class="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
-        <p class="text-center text-[11px] font-medium tracking-wide">
-          🎉 Envío gratis por compras superiores a $50 | Nuevos arribos de temporada
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100 transition-all duration-300">
+    <div class="text-white transition-colors duration-500" :class="storeConfig.accent">
+      <div class="max-w-[1600px] mx-auto px-4 py-2 sm:px-6 lg:px-8 text-center">
+        <p class="text-[10px] md:text-[11px] font-medium tracking-widest uppercase opacity-95">
+          ✨ Diseños exclusivos | Cotiza tu pedido por WhatsApp
         </p>
       </div>
     </div>
 
-    <!-- Main Navigation -->
-    <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between gap-8">
-        <!-- Logo Mejorado -->
-        <div class="shrink-0">
-          <div class="text-2xl tracking-tighter">
-            <span class="font-black text-orange-500 uppercase">Camisa</span><span class="font-extralight text-blue-800">STORE</span>
+    <div class="max-w-[1600px] mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between gap-6">
+        
+        <router-link to="/" class="shrink-0 group cursor-pointer flex items-center gap-2 min-w-[240px]">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-md transition-colors duration-500" :class="storeConfig.accent">
+             <Icon :icon="storeConfig.icon" class="text-lg" />
           </div>
-        </div>
-
-        <!-- Search Bar Premium -->
-        <div class="hidden md:flex flex-1 max-w-2xl">
-          <div class="relative w-full">
-            <input
-              type="text"
-              placeholder="Buscar productos..."
-              class="w-full px-6 py-2.5 bg-gray-50 border border-transparent rounded-full shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-200 focus:bg-white focus:shadow-sm transition-all text-sm text-gray-700 placeholder-gray-500"
-            />
-            <button class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-800 hover:bg-blue-900 text-white p-2 rounded-full transition-all hover:scale-105">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
-            <!-- Shortcut Indicator -->
-            <div class="absolute right-14 top-1/2 -translate-y-1/2 hidden xl:flex items-center gap-1 text-gray-400 text-xs">
-              <kbd class="px-2 py-0.5 bg-gray-200 border border-gray-300 rounded text-[10px] font-mono">⌘</kbd>
-              <kbd class="px-2 py-0.5 bg-gray-200 border border-gray-300 rounded text-[10px] font-mono">K</kbd>
-            </div>
+          <div class="flex flex-col leading-none">
+            <span class="font-black uppercase text-lg tracking-tight" :class="storeConfig.colorMain">{{ storeConfig.main }}</span>
+            <span class="font-light text-xs tracking-widest" :class="storeConfig.colorSub">{{ storeConfig.sub }}</span>
           </div>
-        </div>
+        </router-link>
 
-        <!-- Navigation Links con micro-interacciones -->
-        <div class="hidden lg:flex items-center space-x-6">
-          <router-link 
-            to="/" 
-            class="relative group text-gray-700 text-sm hover:scale-105 transition-transform duration-200"
-            :class="route.path === '/' ? 'font-semibold text-blue-800' : 'font-medium'"
-          >
+        <nav class="hidden lg:flex items-center space-x-8">
+          <router-link to="/" class="relative text-sm text-gray-500 hover:text-gray-900 transition-colors py-2 group" :class="route.path === '/' ? 'text-gray-900 font-bold' : 'font-medium'">
             Inicio
-            <span 
-              class="absolute -bottom-1 left-0 h-0.5 bg-blue-800 transition-all"
-              :class="route.path === '/' ? 'w-full' : 'w-0 group-hover:w-full'"
-            ></span>
+            <span class="absolute bottom-0 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full" :class="[storeConfig.activeBorder, route.path === '/' ? 'w-full' : '']"></span>
           </router-link>
           
-          <router-link 
-            to="/catalogo" 
-            class="relative group text-gray-700 text-sm hover:scale-105 transition-transform duration-200"
-            :class="route.path === '/catalogo' ? 'font-semibold text-blue-800' : 'font-medium'"
-          >
-            Catálogo
-            <span 
-              class="absolute -bottom-1 left-0 h-0.5 bg-blue-800 transition-all"
-              :class="route.path === '/catalogo' ? 'w-full' : 'w-0 group-hover:w-full'"
-            ></span>
+          <router-link to="/catalogo" class="relative text-sm text-gray-500 hover:text-gray-900 transition-colors py-2 group" :class="route.path.includes('/catalogo') ? 'text-gray-900 font-bold' : 'font-medium'">
+            Réplicas
+            <span class="absolute bottom-0 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full" :class="[storeConfig.activeBorder, route.path.includes('/catalogo') ? 'w-full' : '']"></span>
           </router-link>
           
-          <router-link 
-            to="/camisas-estampadas" 
-            class="relative group text-gray-700 text-sm hover:scale-105 transition-transform duration-200"
-            :class="route.path === '/camisas-estampadas' ? 'font-semibold text-blue-800' : 'font-medium'"
-          >
-            Estampadas
-            <span 
-              class="absolute -bottom-1 left-0 h-0.5 bg-blue-800 transition-all"
-              :class="route.path === '/camisas-estampadas' ? 'w-full' : 'w-0 group-hover:w-full'"
-            ></span>
+          <router-link to="/camisas-estampadas" class="relative text-sm text-gray-500 hover:text-gray-900 transition-colors py-2 group" :class="route.path.includes('/camisas-estampadas') ? 'text-gray-900 font-bold' : 'font-medium'">
+            Estampados
+            <span class="absolute bottom-0 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full" :class="[storeConfig.activeBorder, route.path.includes('/camisas-estampadas') ? 'w-full' : '']"></span>
           </router-link>
           
-          <router-link 
-            to="/camisas-bordadas" 
-            class="relative group text-gray-700 text-sm hover:scale-105 transition-transform duration-200"
-            :class="route.path === '/camisas-bordadas' ? 'font-semibold text-blue-800' : 'font-medium'"
-          >
-            Bordadas
-            <span 
-              class="absolute -bottom-1 left-0 h-0.5 bg-blue-800 transition-all"
-              :class="route.path === '/camisas-bordadas' ? 'w-full' : 'w-0 group-hover:w-full'"
-            ></span>
+          <router-link to="/camisas-bordadas" class="relative text-sm text-gray-500 hover:text-gray-900 transition-colors py-2 group" :class="route.path.includes('/camisas-bordadas') ? 'text-gray-900 font-bold' : 'font-medium'">
+            Bordados
+            <span class="absolute bottom-0 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full" :class="[storeConfig.activeBorder, route.path.includes('/camisas-bordadas') ? 'w-full' : '']"></span>
           </router-link>
-          
-          <a 
-            href="#" 
-            @click.prevent="activeSection = 'ofertas'"
-            class="relative group text-gray-700 text-sm hover:scale-105 transition-transform duration-200"
-            :class="activeSection === 'ofertas' ? 'font-semibold text-blue-800' : 'font-medium'"
-          >
-            Ofertas
-            <span 
-              class="absolute -bottom-1 left-0 h-0.5 bg-blue-800 transition-all"
-              :class="activeSection === 'ofertas' ? 'w-full' : 'w-0 group-hover:w-full'"
-            ></span>
-          </a>
-          
-          <a 
-            href="#" 
-            @click.prevent="activeSection = 'cuenta'"
-            class="relative group text-gray-700 text-sm hover:scale-105 transition-transform duration-200"
-            :class="activeSection === 'cuenta' ? 'font-semibold text-blue-800' : 'font-medium'"
-          >
-            Mi Cuenta
-            <span 
-              class="absolute -bottom-1 left-0 h-0.5 bg-blue-800 transition-all"
-              :class="activeSection === 'cuenta' ? 'w-full' : 'w-0 group-hover:w-full'"
-            ></span>
-          </a>
-          
-          <!-- Cart Icon Mejorado -->
-          <div class="relative">
-            <button 
-              class="flex items-center transition-all hover:scale-110"
-              :class="cartCount > 0 ? 'text-gray-700 hover:text-orange-500' : 'text-gray-400 hover:text-gray-600'"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span 
-                v-if="cartCount > 0" 
-                class="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-bounce"
-              >
-                {{ cartCount }}
-              </span>
-            </button>
-          </div>
+        </nav>
+
+        <div class="hidden md:flex items-center bg-gray-50 rounded-full px-4 py-2 border border-gray-200 focus-within:ring-2 focus-within:ring-opacity-50 transition-all w-64" :class="`focus-within:ring-${storeConfig.accent.replace('bg-', '')}`">
+          <Icon icon="mdi:magnify" class="text-gray-400 mr-2" />
+          <input 
+            type="text" 
+            :placeholder="storeConfig.placeholder"
+            class="bg-transparent border-none outline-none text-sm w-full placeholder-gray-400 text-gray-700"
+          />
         </div>
+
+        <button class="lg:hidden text-gray-600">
+          <Icon icon="mdi:menu" class="text-2xl" />
+        </button>
       </div>
     </div>
   </header>
