@@ -1,8 +1,14 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { servicioProductos } from '../services/servicioCatalogo'
+import type { Producto } from '../types/supabase'
 
+/**
+ * Interfaz compatible con los componentes existentes.
+ * Mapea los campos de Supabase (snake_case) a camelCase.
+ */
 export interface Camisa {
-  id: number
+  id: string
   nombre: string
   precio: number
   precioAnterior?: number
@@ -15,374 +21,355 @@ export interface Camisa {
   estampado?: boolean
   bordado?: boolean
   categoria?: string
+  subcategoria?: string
+}
+
+/** Subcategorías de cada sección del sidebar */
+export interface Subcategoria {
+  nombre: string
+  cantidad: number
+}
+
+/** Convierte un producto de Supabase al formato Camisa del frontend */
+function mapearProductoACamisa(producto: Producto): Camisa {
+  return {
+    id: producto.id,
+    nombre: producto.nombre,
+    precio: producto.precio,
+    precioAnterior: producto.precio_anterior ?? undefined,
+    tallas: producto.tallas ?? [],
+    colores: producto.colores ?? [],
+    imagen: producto.imagen_url,
+    descripcion: producto.descripcion ?? '',
+    enOferta: producto.en_oferta,
+    esNuevo: producto.es_nuevo
+  }
+}
+
+/** Aplica filtros de tallas, subcategoría, búsqueda y ordenamiento a una lista */
+function aplicarFiltros(
+  lista: Camisa[],
+  tallasSeleccionadas: string[],
+  subcategoriaActiva: string,
+  terminoBusqueda: string,
+  ordenamiento: string
+): Camisa[] {
+  let resultado = [...lista]
+
+  // Filtrar por subcategoría
+  if (subcategoriaActiva) {
+    resultado = resultado.filter((c) => c.subcategoria === subcategoriaActiva)
+  }
+
+  // Filtrar por tallas
+  if (tallasSeleccionadas.length > 0) {
+    resultado = resultado.filter((c) =>
+      tallasSeleccionadas.some((talla) => c.tallas.includes(talla))
+    )
+  }
+
+  // Filtrar por término de búsqueda
+  if (terminoBusqueda.trim()) {
+    const termino = terminoBusqueda.toLowerCase().trim()
+    resultado = resultado.filter(
+      (c) =>
+        c.nombre.toLowerCase().includes(termino) ||
+        c.descripcion.toLowerCase().includes(termino) ||
+        c.colores.some((color) => color.toLowerCase().includes(termino))
+    )
+  }
+
+  // Ordenar
+  switch (ordenamiento) {
+    case 'price-asc':
+      resultado.sort((a, b) => a.precio - b.precio)
+      break
+    case 'price-desc':
+      resultado.sort((a, b) => b.precio - a.precio)
+      break
+    case 'name-asc':
+      resultado.sort((a, b) => a.nombre.localeCompare(b.nombre))
+      break
+    case 'newness':
+      resultado.sort((a, b) => {
+        if (a.esNuevo && !b.esNuevo) return -1
+        if (!a.esNuevo && b.esNuevo) return 1
+        return 0
+      })
+      break
+    case 'offers':
+      resultado.sort((a, b) => {
+        if (a.enOferta && !b.enOferta) return -1
+        if (!a.enOferta && b.enOferta) return 1
+        return 0
+      })
+      break
+    default:
+      break
+  }
+
+  return resultado
 }
 
 export const useCatalogoStore = defineStore('catalogo', () => {
-  const camisas = ref<Camisa[]>([
-    {
-      id: 1,
-      nombre: 'Camisa Casual Azul Premium',
-      precio: 24.99,
-      precioAnterior: 39.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Azul', 'Blanco', 'Negro'],
-      imagen: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=500&fit=crop',
-      descripcion: 'Camisa casual de algodón 100% perfecta para el día a día',
-      enOferta: true
-    },
-    {
-      id: 2,
-      nombre: 'Camisa Formal Blanca Elegante',
-      precio: 34.99,
-      precioAnterior: 49.99,
-      tallas: ['S', 'M', 'L', 'XL', 'XXL'],
-      colores: ['Blanco', 'Celeste', 'Rosa'],
-      imagen: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&h=500&fit=crop',
-      descripcion: 'Camisa formal elegante ideal para ocasiones especiales',
-      enOferta: true
-    },
-    {
-      id: 3,
-      nombre: 'Camisa Denim Clásica',
-      precio: 29.99,
-      tallas: ['M', 'L', 'XL'],
-      colores: ['Azul Denim', 'Negro Denim'],
-      imagen: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?w=400&h=500&fit=crop',
-      descripcion: 'Camisa de mezclilla resistente y con estilo',
-      esNuevo: true
-    },
-    {
-      id: 4,
-      nombre: 'Camisa Cuadros Leñador',
-      precio: 19.99,
-      precioAnterior: 34.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Rojo/Negro', 'Azul/Blanco', 'Verde/Negro'],
-      imagen: 'https://images.unsplash.com/photo-1598032895397-b9c259d6e948?w=400&h=500&fit=crop',
-      descripcion: 'Camisa a cuadros estilo leñador',
-      enOferta: true
-    },
-    {
-      id: 5,
-      nombre: 'Camisa Lino Beige Verano',
-      precio: 39.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Beige', 'Blanco', 'Gris'],
-      imagen: 'https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?w=400&h=500&fit=crop',
-      descripcion: 'Camisa de lino fresca y ligera para el verano',
-      esNuevo: true
-    },
-    {
-      id: 6,
-      nombre: 'Camisa Oxford Clásica',
-      precio: 27.99,
-      tallas: ['S', 'M', 'L', 'XL', 'XXL'],
-      colores: ['Blanco', 'Azul', 'Rosa'],
-      imagen: 'https://images.unsplash.com/photo-1621072156002-e2fccdc0b176?w=400&h=500&fit=crop',
-      descripcion: 'Camisa Oxford clásica versátil y duradera'
-    },
-    {
-      id: 7,
-      nombre: 'Camisa Polo Rayas Marinero',
-      precio: 22.99,
-      precioAnterior: 35.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Azul/Blanco', 'Rojo/Blanco'],
-      imagen: 'https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=400&h=500&fit=crop',
-      descripcion: 'Camisa polo con rayas estilo marinero',
-      enOferta: true
-    },
-    {
-      id: 8,
-      nombre: 'Camisa Slim Fit Negra',
-      precio: 32.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Negro', 'Gris Oscuro'],
-      imagen: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=400&h=500&fit=crop',
-      descripcion: 'Camisa ajustada moderna color negro',
-      esNuevo: true
-    },
-    {
-      id: 9,
-      nombre: 'Camisa Hawaiana Tropical',
-      precio: 26.99,
-      tallas: ['M', 'L', 'XL', 'XXL'],
-      colores: ['Multicolor'],
-      imagen: 'https://images.unsplash.com/photo-1602810316498-ab67cf68c8e1?w=400&h=500&fit=crop',
-      descripcion: 'Camisa hawaiana con estampado tropical'
-    },
-    {
-      id: 10,
-      nombre: 'Camisa Manga Larga Burgundy',
-      precio: 28.99,
-      precioAnterior: 44.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Burgundy', 'Verde Olivo', 'Azul Marino'],
-      imagen: 'https://images.unsplash.com/photo-1620799139834-6b8f844fbe29?w=400&h=500&fit=crop',
-      descripcion: 'Camisa manga larga color burgundy elegante',
-      enOferta: true
-    }
-  ])
-
-  const camisasEstampadas = ref<Camisa[]>([
-    {
-      id: 11,
-      nombre: 'Camisa Estampado Floral Tropical',
-      precio: 32.99,
-      precioAnterior: 45.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Multicolor', 'Azul/Flores', 'Negro/Flores'],
-      imagen: 'https://images.unsplash.com/photo-1622445275576-721325763afe?w=400&h=500&fit=crop',
-      descripcion: 'Camisa con vibrante estampado floral tropical',
-      enOferta: true,
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 12,
-      nombre: 'Camisa Estampado Geométrico Moderno',
-      precio: 29.99,
-      tallas: ['M', 'L', 'XL', 'XXL'],
-      colores: ['Negro/Blanco', 'Azul/Gris'],
-      imagen: 'https://images.unsplash.com/photo-1620799140834-6b8f844fbe29?w=400&h=500&fit=crop',
-      descripcion: 'Diseño geométrico contemporáneo y elegante',
-      esNuevo: true,
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 13,
-      nombre: 'Camisa Estampado Animal Print',
-      precio: 34.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Leopardo', 'Zebra', 'Serpiente'],
-      imagen: 'https://images.unsplash.com/photo-1622519407650-3df9883f76e6?w=400&h=500&fit=crop',
-      descripcion: 'Atrevida camisa con estampado animal',
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 14,
-      nombre: 'Camisa Estampado Abstracto Arte',
-      precio: 36.99,
-      precioAnterior: 52.99,
-      tallas: ['S', 'M', 'L', 'XL', 'XXL'],
-      colores: ['Multicolor', 'Azul/Naranja', 'Verde/Rosa'],
-      imagen: 'https://images.unsplash.com/photo-1602810316829-91da6c48e3cd?w=400&h=500&fit=crop',
-      descripcion: 'Estampado abstracto inspirado en el arte moderno',
-      enOferta: true,
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 15,
-      nombre: 'Camisa Estampado Rayas Náutico',
-      precio: 27.99,
-      tallas: ['M', 'L', 'XL'],
-      colores: ['Azul/Blanco', 'Rojo/Blanco', 'Negro/Blanco'],
-      imagen: 'https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?w=400&h=500&fit=crop',
-      descripcion: 'Clásico estampado de rayas estilo marinero',
-      esNuevo: true,
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 16,
-      nombre: 'Camisa Estampado Paisley Oriental',
-      precio: 31.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Borgoña/Dorado', 'Azul/Plata', 'Verde/Oro'],
-      imagen: 'https://images.unsplash.com/photo-1603252109612-5d8f5b0e1b1e?w=400&h=500&fit=crop',
-      descripcion: 'Elegante diseño paisley con detalles orientales',
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 17,
-      nombre: 'Camisa Estampado Lunares Retro',
-      precio: 25.99,
-      precioAnterior: 38.99,
-      tallas: ['S', 'M', 'L', 'XL', 'XXL'],
-      colores: ['Negro/Blanco', 'Azul/Blanco', 'Rojo/Blanco'],
-      imagen: 'https://images.unsplash.com/photo-1621072156002-e2fccdc0b176?w=400&h=500&fit=crop',
-      descripcion: 'Divertido estampado de lunares estilo vintage',
-      enOferta: true,
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 18,
-      nombre: 'Camisa Estampado Cachemira Premium',
-      precio: 38.99,
-      tallas: ['M', 'L', 'XL'],
-      colores: ['Azul/Dorado', 'Negro/Plata', 'Vino/Oro'],
-      imagen: 'https://images.unsplash.com/photo-1598032895397-b9c259d6e948?w=400&h=500&fit=crop',
-      descripcion: 'Sofisticado patrón cachemira de alta calidad',
-      esNuevo: true,
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 19,
-      nombre: 'Camisa Estampado Cuadros Escocés',
-      precio: 30.99,
-      tallas: ['S', 'M', 'L', 'XL', 'XXL'],
-      colores: ['Rojo/Negro', 'Verde/Azul', 'Gris/Negro'],
-      imagen: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&h=500&fit=crop',
-      descripcion: 'Tradicional estampado de cuadros escoceses',
-      estampado: true,
-      categoria: 'Estampadas'
-    },
-    {
-      id: 20,
-      nombre: 'Camisa Estampado Tie-Dye Vintage',
-      precio: 28.99,
-      precioAnterior: 42.99,
-      tallas: ['M', 'L', 'XL'],
-      colores: ['Multicolor', 'Azul/Violeta', 'Rosa/Naranja'],
-      imagen: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?w=400&h=500&fit=crop',
-      descripcion: 'Estampado tie-dye retro años 70',
-      enOferta: true,
-      estampado: true,
-      categoria: 'Estampadas'
-    }
-  ])
-
-  const camisasBordadas = ref<Camisa[]>([
-    {
-      id: 21,
-      nombre: 'Camisa Bordado Floral Delicado',
-      precio: 42.99,
-      precioAnterior: 59.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Blanco/Flores', 'Beige/Flores', 'Rosa/Flores'],
-      imagen: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=500&fit=crop',
-      descripcion: 'Elegante bordado floral hecho a mano',
-      enOferta: true,
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 22,
-      nombre: 'Camisa Bordado Geométrico Étnico',
-      precio: 44.99,
-      tallas: ['M', 'L', 'XL', 'XXL'],
-      colores: ['Negro/Dorado', 'Azul/Plata', 'Vino/Oro'],
-      imagen: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop',
-      descripcion: 'Bordado étnico con detalles geométricos',
-      esNuevo: true,
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 23,
-      nombre: 'Camisa Bordado Cuello y Puños Premium',
-      precio: 48.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Blanco/Azul', 'Negro/Plateado', 'Beige/Dorado'],
-      imagen: 'https://images.unsplash.com/photo-1620799139834-6b8f844fbe29?w=400&h=500&fit=crop',
-      descripcion: 'Bordado refinado en cuello y puños',
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 24,
-      nombre: 'Camisa Bordado Mexicano Artesanal',
-      precio: 52.99,
-      precioAnterior: 69.99,
-      tallas: ['S', 'M', 'L', 'XL', 'XXL'],
-      colores: ['Blanco/Multicolor', 'Negro/Multicolor', 'Crema/Colores'],
-      imagen: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&h=500&fit=crop',
-      descripcion: 'Auténtico bordado mexicano tradicional',
-      enOferta: true,
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 25,
-      nombre: 'Camisa Bordado Minimalista Moderno',
-      precio: 39.99,
-      tallas: ['M', 'L', 'XL'],
-      colores: ['Blanco/Negro', 'Gris/Blanco', 'Azul/Blanco'],
-      imagen: 'https://images.unsplash.com/photo-1603252109612-5d8f5b0e1b1e?w=400&h=500&fit=crop',
-      descripcion: 'Bordado minimalista y contemporáneo',
-      esNuevo: true,
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 26,
-      nombre: 'Camisa Bordado Oriental Dragón',
-      precio: 56.99,
-      tallas: ['S', 'M', 'L', 'XL'],
-      colores: ['Negro/Dorado', 'Rojo/Dorado', 'Azul/Plata'],
-      imagen: 'https://images.unsplash.com/photo-1598032895397-b9c259d6e948?w=400&h=500&fit=crop',
-      descripcion: 'Bordado oriental con figura de dragón',
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 27,
-      nombre: 'Camisa Bordado Vintage Inglés',
-      precio: 46.99,
-      precioAnterior: 64.99,
-      tallas: ['S', 'M', 'L', 'XL', 'XXL'],
-      colores: ['Blanco/Verde', 'Beige/Café', 'Gris/Azul'],
-      imagen: 'https://images.unsplash.com/photo-1621072156002-e2fccdc0b176?w=400&h=500&fit=crop',
-      descripcion: 'Bordado vintage estilo inglés clásico',
-      enOferta: true,
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 28,
-      nombre: 'Camisa Bordado Bohemio Hippie',
-      precio: 41.99,
-      tallas: ['M', 'L', 'XL'],
-      colores: ['Blanco/Multicolor', 'Crema/Colores', 'Beige/Bordado'],
-      imagen: 'https://images.unsplash.com/photo-1622445275576-721325763afe?w=400&h=500&fit=crop',
-      descripcion: 'Bordado bohemio con espíritu libre',
-      esNuevo: true,
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 29,
-      nombre: 'Camisa Bordado Indio Kashida',
-      precio: 54.99,
-      tallas: ['S', 'M', 'L', 'XL', 'XXL'],
-      colores: ['Blanco/Multicolor', 'Negro/Colores', 'Azul/Bordado'],
-      imagen: 'https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?w=400&h=500&fit=crop',
-      descripcion: 'Técnica tradicional kashida de India',
-      bordado: true,
-      categoria: 'Bordadas'
-    },
-    {
-      id: 30,
-      nombre: 'Camisa Bordado Perlas y Lentejuelas',
-      precio: 64.99,
-      precioAnterior: 89.99,
-      tallas: ['M', 'L', 'XL'],
-      colores: ['Blanco/Perlas', 'Negro/Plateado', 'Champagne/Dorado'],
-      imagen: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?w=400&h=500&fit=crop',
-      descripcion: 'Bordado premium con perlas y lentejuelas',
-      enOferta: true,
-      bordado: true,
-      categoria: 'Bordadas'
-    }
-  ])
-
+  // --- Datos crudos ---
+  const camisasRaw = ref<Camisa[]>([])
+  const camisasEstampadasRaw = ref<Camisa[]>([])
+  const camisasBordadasRaw = ref<Camisa[]>([])
   const camisaSeleccionada = ref<Camisa | null>(null)
+  const cargando = ref(false)
+  const error = ref<string | null>(null)
+
+  // --- Estado de filtros (compartido) ---
+  const tallasSeleccionadas = ref<string[]>([])
+  const subcategoriaActiva = ref('')
+  const terminoBusqueda = ref('')
+  const ordenamiento = ref('newness')
+
+  // --- Subcategorías dinámicas para el sidebar ---
+  const subcategoriasReplicas: { nombre: string; palabrasClave: string[] }[] = [
+    { nombre: 'Ligas Europeas', palabrasClave: ['casual', 'formal', 'oxford', 'slim'] },
+    { nombre: 'Selecciones Nacionales', palabrasClave: ['polo', 'manga larga', 'burgundy'] },
+    { nombre: 'Retro / Clásicas', palabrasClave: ['denim', 'cuadros', 'leñador'] },
+    { nombre: 'Edición Especial', palabrasClave: ['hawaiana', 'tropical', 'lino'] },
+    { nombre: 'Niños', palabrasClave: ['marinero', 'rayas'] }
+  ]
+
+  const subcategoriasEstampadas: { nombre: string; palabrasClave: string[] }[] = [
+    { nombre: 'Anime & Manga', palabrasClave: ['abstracto', 'arte'] },
+    { nombre: 'Bandas de Rock', palabrasClave: ['tie-dye', 'vintage'] },
+    { nombre: 'Frases y Memes', palabrasClave: ['lunares', 'retro'] },
+    { nombre: 'Minimalistas', palabrasClave: ['geométrico', 'rayas', 'náutico'] },
+    { nombre: 'Parejas', palabrasClave: ['floral', 'animal', 'paisley', 'cachemira', 'cuadros'] }
+  ]
+
+  const subcategoriasBordadas: { nombre: string; palabrasClave: string[] }[] = [
+    { nombre: 'Logos Empresariales', palabrasClave: ['cuello', 'puños', 'minimalista'] },
+    { nombre: 'Nombres y Iniciales', palabrasClave: ['floral', 'bohemio', 'hippie'] },
+    { nombre: 'Escudos', palabrasClave: ['oriental', 'dragón', 'indio', 'kashida'] },
+    { nombre: 'Gorras Bordadas', palabrasClave: ['perlas', 'lentejuelas', 'vintage', 'inglés'] },
+    { nombre: 'Uniformes', palabrasClave: ['étnico', 'geométrico', 'mexicano'] }
+  ]
+
+  /** Asigna subcategorías basándose en palabras clave del nombre */
+  function asignarSubcategoria(
+    lista: Camisa[],
+    mapeo: { nombre: string; palabrasClave: string[] }[]
+  ): Camisa[] {
+    return lista.map((camisa) => {
+      const nombreLower = camisa.nombre.toLowerCase()
+      const sub = mapeo.find((s) =>
+        s.palabrasClave.some((kw) => nombreLower.includes(kw.toLowerCase()))
+      )
+      return { ...camisa, subcategoria: sub?.nombre ?? (mapeo[0]?.nombre ?? '') }
+    })
+  }
+
+  /** Calcula las subcategorías con sus conteos reales */
+  function calcularSubcategorias(
+    lista: Camisa[],
+    mapeo: { nombre: string; palabrasClave: string[] }[]
+  ): Subcategoria[] {
+    return mapeo.map((sub) => ({
+      nombre: sub.nombre,
+      cantidad: lista.filter((c) => c.subcategoria === sub.nombre).length
+    }))
+  }
+
+  // --- Computed: subcategorías con conteo real ---
+  const subcategoriasReplicasComputed = computed(() =>
+    calcularSubcategorias(camisasRaw.value, subcategoriasReplicas)
+  )
+  const subcategoriasEstampadasComputed = computed(() =>
+    calcularSubcategorias(camisasEstampadasRaw.value, subcategoriasEstampadas)
+  )
+  const subcategoriasBordadasComputed = computed(() =>
+    calcularSubcategorias(camisasBordadasRaw.value, subcategoriasBordadas)
+  )
+
+  // --- Computed: listas filtradas ---
+  const camisas = computed(() =>
+    aplicarFiltros(
+      camisasRaw.value,
+      tallasSeleccionadas.value,
+      subcategoriaActiva.value,
+      terminoBusqueda.value,
+      ordenamiento.value
+    )
+  )
+
+  const camisasEstampadas = computed(() =>
+    aplicarFiltros(
+      camisasEstampadasRaw.value,
+      tallasSeleccionadas.value,
+      subcategoriaActiva.value,
+      terminoBusqueda.value,
+      ordenamiento.value
+    )
+  )
+
+  const camisasBordadas = computed(() =>
+    aplicarFiltros(
+      camisasBordadasRaw.value,
+      tallasSeleccionadas.value,
+      subcategoriaActiva.value,
+      terminoBusqueda.value,
+      ordenamiento.value
+    )
+  )
+
+  // --- Acciones de filtro ---
+  function toggleTalla(talla: string) {
+    const indice = tallasSeleccionadas.value.indexOf(talla)
+    if (indice > -1) {
+      tallasSeleccionadas.value.splice(indice, 1)
+    } else {
+      tallasSeleccionadas.value.push(talla)
+    }
+  }
+
+  function seleccionarSubcategoria(nombre: string) {
+    subcategoriaActiva.value = subcategoriaActiva.value === nombre ? '' : nombre
+  }
+
+  function establecerBusqueda(termino: string) {
+    terminoBusqueda.value = termino
+  }
+
+  function establecerOrdenamiento(valor: string) {
+    ordenamiento.value = valor
+  }
+
+  function limpiarFiltros() {
+    tallasSeleccionadas.value = []
+    subcategoriaActiva.value = ''
+    terminoBusqueda.value = ''
+    ordenamiento.value = 'newness'
+  }
+
+  const hayFiltrosActivos = computed(() =>
+    tallasSeleccionadas.value.length > 0 ||
+    subcategoriaActiva.value !== '' ||
+    terminoBusqueda.value.trim() !== ''
+  )
+
+  // --- Carga de datos ---
+  async function cargarCamisas() {
+    cargando.value = true
+    error.value = null
+    try {
+      const datos = await servicioProductos.obtenerPorCategoria('replicas')
+      camisasRaw.value = asignarSubcategoria(
+        datos.map(mapearProductoACamisa),
+        subcategoriasReplicas
+      )
+    } catch (e) {
+      error.value = 'Error al cargar camisas'
+      console.error(e)
+    } finally {
+      cargando.value = false
+    }
+  }
+
+  async function cargarCamisasEstampadas() {
+    cargando.value = true
+    error.value = null
+    try {
+      const datos = await servicioProductos.obtenerPorCategoria('estampadas')
+      camisasEstampadasRaw.value = asignarSubcategoria(
+        datos.map((p) => ({
+          ...mapearProductoACamisa(p),
+          estampado: true,
+          categoria: 'Estampadas'
+        })),
+        subcategoriasEstampadas
+      )
+    } catch (e) {
+      error.value = 'Error al cargar camisas estampadas'
+      console.error(e)
+    } finally {
+      cargando.value = false
+    }
+  }
+
+  async function cargarCamisasBordadas() {
+    cargando.value = true
+    error.value = null
+    try {
+      const datos = await servicioProductos.obtenerPorCategoria('bordadas')
+      camisasBordadasRaw.value = asignarSubcategoria(
+        datos.map((p) => ({
+          ...mapearProductoACamisa(p),
+          bordado: true,
+          categoria: 'Bordadas'
+        })),
+        subcategoriasBordadas
+      )
+    } catch (e) {
+      error.value = 'Error al cargar camisas bordadas'
+      console.error(e)
+    } finally {
+      cargando.value = false
+    }
+  }
+
+  async function cargarTodo() {
+    await Promise.all([
+      cargarCamisas(),
+      cargarCamisasEstampadas(),
+      cargarCamisasBordadas()
+    ])
+  }
+
+  /** Obtiene una camisa por ID buscando en todas las listas */
+  function obtenerPorId(id: string): Camisa | undefined {
+    return (
+      camisasRaw.value.find((c) => c.id === id) ??
+      camisasEstampadasRaw.value.find((c) => c.id === id) ??
+      camisasBordadasRaw.value.find((c) => c.id === id)
+    )
+  }
 
   function seleccionarCamisa(camisa: Camisa) {
     camisaSeleccionada.value = camisa
   }
 
   return {
+    // Listas filtradas (computed)
     camisas,
     camisasEstampadas,
     camisasBordadas,
+    // Listas crudas
+    camisasRaw,
+    camisasEstampadasRaw,
+    camisasBordadasRaw,
+    // Subcategorías con conteo
+    subcategoriasReplicasComputed,
+    subcategoriasEstampadasComputed,
+    subcategoriasBordadasComputed,
+    // Estado
     camisaSeleccionada,
+    cargando,
+    error,
+    // Filtros
+    tallasSeleccionadas,
+    subcategoriaActiva,
+    terminoBusqueda,
+    ordenamiento,
+    hayFiltrosActivos,
+    // Acciones de filtro
+    toggleTalla,
+    seleccionarSubcategoria,
+    establecerBusqueda,
+    establecerOrdenamiento,
+    limpiarFiltros,
+    // Carga
+    cargarCamisas,
+    cargarCamisasEstampadas,
+    cargarCamisasBordadas,
+    cargarTodo,
+    // Utils
+    obtenerPorId,
     seleccionarCamisa
   }
 })

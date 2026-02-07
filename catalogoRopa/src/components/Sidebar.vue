@@ -1,76 +1,48 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useCatalogoStore } from '../stores/catalogoStore'
 
 const route = useRoute()
-const tallasSeleccionadas = ref<string[]>([])
-const categoriaActiva = ref<string>('')
+const catalogoStore = useCatalogoStore()
 
 const seccionesAbiertas = ref({
   categorias: true,
   tallas: true
 })
 
-// Lógica de Tiendas Separadas: Definimos las categorías según la ruta
+// Subcategorías dinámicas con conteo real desde el store
 const categoriasDinamicas = computed(() => {
   const path = route.path
-
   if (path.includes('camisas-estampadas')) {
-    return [
-      { nombre: 'Anime & Manga', cantidad: 42 },
-      { nombre: 'Bandas de Rock', cantidad: 18 },
-      { nombre: 'Frases y Memes', cantidad: 25 },
-      { nombre: 'Minimalistas', cantidad: 12 },
-      { nombre: 'Parejas', cantidad: 8 }
-    ]
+    return catalogoStore.subcategoriasEstampadasComputed
   } else if (path.includes('camisas-bordadas')) {
-    return [
-      { nombre: 'Logos Empresariales', cantidad: 15 },
-      { nombre: 'Nombres y Iniciales', cantidad: 30 },
-      { nombre: 'Escudos', cantidad: 10 },
-      { nombre: 'Gorras Bordadas', cantidad: 20 },
-      { nombre: 'Uniformes', cantidad: 5 }
-    ]
-  } else {
-    // Por defecto: Catálogo de Réplicas (Fútbol)
-    return [
-      { nombre: 'Ligas Europeas', cantidad: 45 },
-      { nombre: 'Selecciones Nacionales', cantidad: 32 },
-      { nombre: 'Retro / Clásicas', cantidad: 12 },
-      { nombre: 'Edición Especial', cantidad: 8 },
-      { nombre: 'Niños', cantidad: 15 }
-    ]
+    return catalogoStore.subcategoriasBordadasComputed
   }
+  return catalogoStore.subcategoriasReplicasComputed
 })
 
-// También cambiamos el color de los elementos según la tienda
 const colorTienda = computed(() => {
   if (route.path.includes('estampadas')) return 'text-amber-600'
   if (route.path.includes('bordadas')) return 'text-purple-600'
-  return 'text-[#002B42]' // Default Navy
+  return 'text-[#002B42]'
+})
+
+const colorBarraActiva = computed(() => {
+  if (route.path.includes('estampadas')) return 'bg-amber-500'
+  if (route.path.includes('bordadas')) return 'bg-purple-500'
+  return 'bg-[#009DAE]'
 })
 
 const toggleSeccion = (seccion: 'categorias' | 'tallas') => {
   seccionesAbiertas.value[seccion] = !seccionesAbiertas.value[seccion]
-}
-
-const toggleTalla = (talla: string) => {
-  const index = tallasSeleccionadas.value.indexOf(talla)
-  if (index > -1) {
-    tallasSeleccionadas.value.splice(index, 1)
-  } else {
-    tallasSeleccionadas.value.push(talla)
-  }
-}
-
-const seleccionarCategoria = (categoria: string) => {
-  categoriaActiva.value = categoriaActiva.value === categoria ? '' : categoria
 }
 </script>
 
 <template>
   <aside class="sticky top-24 space-y-6">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <!-- Sección Categorías -->
       <div class="border-b border-gray-100">
         <button 
           @click="toggleSeccion('categorias')"
@@ -92,17 +64,17 @@ const seleccionarCategoria = (categoria: string) => {
           <ul class="space-y-1">
             <li v-for="categoria in categoriasDinamicas" :key="categoria.nombre">
               <button
-                @click="seleccionarCategoria(categoria.nombre)"
+                @click="catalogoStore.seleccionarSubcategoria(categoria.nombre)"
                 class="w-full flex items-center justify-between text-left text-sm py-2.5 px-3 rounded-lg group relative transition-all duration-200"
-                :class="categoriaActiva === categoria.nombre 
+                :class="catalogoStore.subcategoriaActiva === categoria.nombre 
                   ? 'bg-gray-100 font-bold' 
                   : 'text-gray-600 hover:bg-gray-50'"
               >
                 <span 
                   class="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-1 rounded-r transition-all duration-300"
                   :class="[
-                    categoriaActiva === categoria.nombre ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0',
-                    route.path.includes('estampadas') ? 'bg-amber-500' : route.path.includes('bordadas') ? 'bg-purple-500' : 'bg-[#009DAE]'
+                    catalogoStore.subcategoriaActiva === categoria.nombre ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0',
+                    colorBarraActiva
                   ]"
                 ></span>
                 
@@ -117,6 +89,7 @@ const seleccionarCategoria = (categoria: string) => {
         </div>
       </div>
 
+      <!-- Sección Tallas -->
       <div>
         <button 
           @click="toggleSeccion('tallas')"
@@ -134,9 +107,9 @@ const seleccionarCategoria = (categoria: string) => {
             <button 
               v-for="talla in ['S', 'M', 'L', 'XL', 'XXL']" 
               :key="talla"
-              @click="toggleTalla(talla)"
+              @click="catalogoStore.toggleTalla(talla)"
               class="py-2.5 text-xs font-bold border rounded-lg transition-all duration-200 hover:border-gray-400"
-              :class="tallasSeleccionadas.includes(talla) 
+              :class="catalogoStore.tallasSeleccionadas.includes(talla) 
                 ? 'bg-gray-800 text-white border-gray-800' 
                 : 'border-gray-200 text-gray-500'"
             >
@@ -144,6 +117,19 @@ const seleccionarCategoria = (categoria: string) => {
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- Botón limpiar filtros -->
+      <div v-if="catalogoStore.hayFiltrosActivos" class="px-5 pb-5">
+        <button
+          @click="catalogoStore.limpiarFiltros()"
+          class="w-full py-2.5 text-xs font-bold text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-all duration-200 flex items-center justify-center gap-2"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Limpiar filtros
+        </button>
       </div>
     </div>
   </aside>

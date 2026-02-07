@@ -2,8 +2,14 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
+import { useCatalogoStore } from '../stores/catalogoStore'
+import { useCarritoStore } from '../stores/carritoStore'
+import CarritoDrawer from './CarritoDrawer.vue'
+
+const carrito = useCarritoStore()
 
 const route = useRoute()
+const catalogoStore = useCatalogoStore()
 
 // Configuración dinámica según la tienda
 const storeConfig = computed(() => {
@@ -100,9 +106,33 @@ const storeConfig = computed(() => {
           <input 
             type="text" 
             :placeholder="storeConfig.placeholder"
+            :value="catalogoStore.terminoBusqueda"
+            @input="catalogoStore.establecerBusqueda(($event.target as HTMLInputElement).value)"
             class="bg-transparent border-none outline-none text-sm w-full placeholder-gray-400 text-gray-700"
           />
+          <button
+            v-if="catalogoStore.terminoBusqueda"
+            @click="catalogoStore.establecerBusqueda('')"
+            class="text-gray-400 hover:text-gray-600 transition-colors ml-1 flex-shrink-0"
+          >
+            <Icon icon="mdi:close-circle" class="text-base" />
+          </button>
         </div>
+
+        <!-- Botón carrito -->
+        <button
+          @click="carrito.toggleCarrito()"
+          class="relative p-2 text-gray-600 hover:text-[#002B42] transition-colors"
+        >
+          <Icon icon="mdi:cart-outline" class="text-2xl" />
+          <span
+            v-if="carrito.totalItems > 0"
+            class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm animate-bounce"
+            :class="{ 'animate-none': carrito.totalItems > 0 }"
+          >
+            {{ carrito.totalItems > 99 ? '99+' : carrito.totalItems }}
+          </span>
+        </button>
 
         <button class="lg:hidden text-gray-600">
           <Icon icon="mdi:menu" class="text-2xl" />
@@ -110,4 +140,7 @@ const storeConfig = computed(() => {
       </div>
     </div>
   </header>
+
+  <!-- Carrito Drawer -->
+  <CarritoDrawer />
 </template>
