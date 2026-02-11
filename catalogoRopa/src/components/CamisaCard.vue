@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import type { Camisa } from '../stores/catalogoStore'
@@ -19,13 +18,6 @@ function agregarAlCarrito(e: Event) {
   carrito.agregarItem(props.camisa, talla, color)
 }
 
-const descuento = computed(() => {
-  if (!props.camisa.precioAnterior) return 0
-  return Math.round(
-    ((props.camisa.precioAnterior - props.camisa.precio) / props.camisa.precioAnterior) * 100
-  )
-})
-
 function irADetalle() {
   router.push({ name: 'detalle-producto', params: { id: props.camisa.id } })
 }
@@ -43,8 +35,8 @@ function irADetalle() {
         <span v-if="camisa.esNuevo" class="bg-white/90 backdrop-blur-md text-gray-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm border border-gray-100">
           Nuevo
         </span>
-        <span v-if="camisa.enOferta && descuento > 0" class="bg-red-500 text-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
-          -{{ descuento }}%
+        <span v-if="camisa.enOferta" class="bg-amber-500 text-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
+          En oferta
         </span>
       </div>
 
@@ -80,18 +72,15 @@ function irADetalle() {
         </p>
       </div>
 
-      <!-- Precio + Agregar al carrito -->
-      <div class="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-gray-50">
-        <div class="flex items-baseline gap-2">
-          <span class="text-lg font-black text-[#002B42]">${{ camisa.precio.toFixed(2) }}</span>
-          <span v-if="camisa.precioAnterior" class="text-xs text-gray-400 line-through">${{ camisa.precioAnterior.toFixed(2) }}</span>
-        </div>
+      <!-- Agregar al carrito -->
+      <div class="mt-auto pt-3 border-t border-gray-50">
         <button
           @click="agregarAlCarrito"
-          class="p-2 bg-[#002B42] hover:bg-[#009DAE] text-white rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
+          class="w-full flex items-center justify-center gap-2 bg-[#002B42] hover:bg-[#009DAE] text-white rounded-xl px-4 py-2.5 font-bold text-xs uppercase tracking-widest transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] shadow-sm"
           title="Agregar al carrito"
         >
           <Icon icon="mdi:cart-plus" class="text-base" />
+          Agregar
         </button>
       </div>
     </div>

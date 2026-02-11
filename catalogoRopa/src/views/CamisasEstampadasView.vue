@@ -49,8 +49,6 @@ onMounted(() => {
               class="appearance-none bg-white border border-[#005F7F]/10 rounded-xl pl-4 pr-10 py-2.5 text-sm font-medium text-[#002B42] focus:outline-none focus:ring-2 focus:ring-[#009DAE] focus:border-transparent shadow-sm hover:border-[#009DAE]/50 transition-all cursor-pointer"
             >
               <option value="newness">Más recientes</option>
-              <option value="price-asc">Precio: menor a mayor</option>
-              <option value="price-desc">Precio: mayor a menor</option>
               <option value="name-asc">Nombre A-Z</option>
               <option value="offers">Ofertas primero</option>
             </select>

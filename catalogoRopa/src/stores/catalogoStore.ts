@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { servicioProductos } from '../services/servicioCatalogo'
+import { SUBCATEGORIAS_POR_SLUG } from '../constants/subcategorias'
 import type { Producto } from '../types/supabase'
 
 /**
@@ -10,8 +11,6 @@ import type { Producto } from '../types/supabase'
 export interface Camisa {
   id: string
   nombre: string
-  precio: number
-  precioAnterior?: number
   tallas: string[]
   colores: string[]
   imagen: string
@@ -21,7 +20,7 @@ export interface Camisa {
   estampado?: boolean
   bordado?: boolean
   categoria?: string
-  subcategoria?: string
+  subcategorias: string[]
 }
 
 /** Subcategorías de cada sección del sidebar */
@@ -35,14 +34,13 @@ function mapearProductoACamisa(producto: Producto): Camisa {
   return {
     id: producto.id,
     nombre: producto.nombre,
-    precio: producto.precio,
-    precioAnterior: producto.precio_anterior ?? undefined,
     tallas: producto.tallas ?? [],
     colores: producto.colores ?? [],
     imagen: producto.imagen_url,
     descripcion: producto.descripcion ?? '',
     enOferta: producto.en_oferta,
-    esNuevo: producto.es_nuevo
+    esNuevo: producto.es_nuevo,
+    subcategorias: producto.subcategorias ?? []
   }
 }
 
@@ -58,7 +56,7 @@ function aplicarFiltros(
 
   // Filtrar por subcategoría
   if (subcategoriaActiva) {
-    resultado = resultado.filter((c) => c.subcategoria === subcategoriaActiva)
+    resultado = resultado.filter((c) => c.subcategorias.includes(subcategoriaActiva))
   }
 
   // Filtrar por tallas
@@ -81,12 +79,6 @@ function aplicarFiltros(
 
   // Ordenar
   switch (ordenamiento) {
-    case 'price-asc':
-      resultado.sort((a, b) => a.precio - b.precio)
-      break
-    case 'price-desc':
-      resultado.sort((a, b) => b.precio - a.precio)
-      break
     case 'name-asc':
       resultado.sort((a, b) => a.nombre.localeCompare(b.nombre))
       break
@@ -127,64 +119,26 @@ export const useCatalogoStore = defineStore('catalogo', () => {
   const ordenamiento = ref('newness')
 
   // --- Subcategorías dinámicas para el sidebar ---
-  const subcategoriasReplicas: { nombre: string; palabrasClave: string[] }[] = [
-    { nombre: 'Ligas Europeas', palabrasClave: ['casual', 'formal', 'oxford', 'slim'] },
-    { nombre: 'Selecciones Nacionales', palabrasClave: ['polo', 'manga larga', 'burgundy'] },
-    { nombre: 'Retro / Clásicas', palabrasClave: ['denim', 'cuadros', 'leñador'] },
-    { nombre: 'Edición Especial', palabrasClave: ['hawaiana', 'tropical', 'lino'] },
-    { nombre: 'Niños', palabrasClave: ['marinero', 'rayas'] }
-  ]
-
-  const subcategoriasEstampadas: { nombre: string; palabrasClave: string[] }[] = [
-    { nombre: 'Anime & Manga', palabrasClave: ['abstracto', 'arte'] },
-    { nombre: 'Bandas de Rock', palabrasClave: ['tie-dye', 'vintage'] },
-    { nombre: 'Frases y Memes', palabrasClave: ['lunares', 'retro'] },
-    { nombre: 'Minimalistas', palabrasClave: ['geométrico', 'rayas', 'náutico'] },
-    { nombre: 'Parejas', palabrasClave: ['floral', 'animal', 'paisley', 'cachemira', 'cuadros'] }
-  ]
-
-  const subcategoriasBordadas: { nombre: string; palabrasClave: string[] }[] = [
-    { nombre: 'Logos Empresariales', palabrasClave: ['cuello', 'puños', 'minimalista'] },
-    { nombre: 'Nombres y Iniciales', palabrasClave: ['floral', 'bohemio', 'hippie'] },
-    { nombre: 'Escudos', palabrasClave: ['oriental', 'dragón', 'indio', 'kashida'] },
-    { nombre: 'Gorras Bordadas', palabrasClave: ['perlas', 'lentejuelas', 'vintage', 'inglés'] },
-    { nombre: 'Uniformes', palabrasClave: ['étnico', 'geométrico', 'mexicano'] }
-  ]
-
-  /** Asigna subcategorías basándose en palabras clave del nombre */
-  function asignarSubcategoria(
-    lista: Camisa[],
-    mapeo: { nombre: string; palabrasClave: string[] }[]
-  ): Camisa[] {
-    return lista.map((camisa) => {
-      const nombreLower = camisa.nombre.toLowerCase()
-      const sub = mapeo.find((s) =>
-        s.palabrasClave.some((kw) => nombreLower.includes(kw.toLowerCase()))
-      )
-      return { ...camisa, subcategoria: sub?.nombre ?? (mapeo[0]?.nombre ?? '') }
-    })
-  }
-
   /** Calcula las subcategorías con sus conteos reales */
   function calcularSubcategorias(
     lista: Camisa[],
-    mapeo: { nombre: string; palabrasClave: string[] }[]
+    mapeo: readonly string[]
   ): Subcategoria[] {
     return mapeo.map((sub) => ({
-      nombre: sub.nombre,
-      cantidad: lista.filter((c) => c.subcategoria === sub.nombre).length
+      nombre: sub,
+      cantidad: lista.filter((c) => c.subcategorias.includes(sub)).length
     }))
   }
 
   // --- Computed: subcategorías con conteo real ---
   const subcategoriasReplicasComputed = computed(() =>
-    calcularSubcategorias(camisasRaw.value, subcategoriasReplicas)
+    calcularSubcategorias(camisasRaw.value, SUBCATEGORIAS_POR_SLUG.replicas)
   )
   const subcategoriasEstampadasComputed = computed(() =>
-    calcularSubcategorias(camisasEstampadasRaw.value, subcategoriasEstampadas)
+    calcularSubcategorias(camisasEstampadasRaw.value, SUBCATEGORIAS_POR_SLUG.estampadas)
   )
   const subcategoriasBordadasComputed = computed(() =>
-    calcularSubcategorias(camisasBordadasRaw.value, subcategoriasBordadas)
+    calcularSubcategorias(camisasBordadasRaw.value, SUBCATEGORIAS_POR_SLUG.bordadas)
   )
 
   // --- Computed: listas filtradas ---
@@ -259,10 +213,7 @@ export const useCatalogoStore = defineStore('catalogo', () => {
     error.value = null
     try {
       const datos = await servicioProductos.obtenerPorCategoria('replicas')
-      camisasRaw.value = asignarSubcategoria(
-        datos.map(mapearProductoACamisa),
-        subcategoriasReplicas
-      )
+      camisasRaw.value = datos.map(mapearProductoACamisa)
     } catch (e) {
       error.value = 'Error al cargar camisas'
       console.error(e)
@@ -276,14 +227,11 @@ export const useCatalogoStore = defineStore('catalogo', () => {
     error.value = null
     try {
       const datos = await servicioProductos.obtenerPorCategoria('estampadas')
-      camisasEstampadasRaw.value = asignarSubcategoria(
-        datos.map((p) => ({
-          ...mapearProductoACamisa(p),
-          estampado: true,
-          categoria: 'Estampadas'
-        })),
-        subcategoriasEstampadas
-      )
+      camisasEstampadasRaw.value = datos.map((p) => ({
+        ...mapearProductoACamisa(p),
+        estampado: true,
+        categoria: 'Estampadas'
+      }))
     } catch (e) {
       error.value = 'Error al cargar camisas estampadas'
       console.error(e)
@@ -297,14 +245,11 @@ export const useCatalogoStore = defineStore('catalogo', () => {
     error.value = null
     try {
       const datos = await servicioProductos.obtenerPorCategoria('bordadas')
-      camisasBordadasRaw.value = asignarSubcategoria(
-        datos.map((p) => ({
-          ...mapearProductoACamisa(p),
-          bordado: true,
-          categoria: 'Bordadas'
-        })),
-        subcategoriasBordadas
-      )
+      camisasBordadasRaw.value = datos.map((p) => ({
+        ...mapearProductoACamisa(p),
+        bordado: true,
+        categoria: 'Bordadas'
+      }))
     } catch (e) {
       error.value = 'Error al cargar camisas bordadas'
       console.error(e)

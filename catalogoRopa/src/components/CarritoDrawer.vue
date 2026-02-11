@@ -4,10 +4,6 @@ import { useCarritoStore } from '../stores/carritoStore'
 
 const carrito = useCarritoStore()
 
-function formatoPrecio(precio: number): string {
-  return `$${precio.toFixed(2)}`
-}
-
 function procederAlPago() {
   const url = carrito.generarUrlWhatsApp()
   if (url) {
@@ -117,15 +113,6 @@ function procederAlPago() {
                     </button>
                   </div>
 
-                  <!-- Precio -->
-                  <div class="text-right">
-                    <p class="text-sm font-bold text-[#002B42]">
-                      {{ formatoPrecio(item.producto.precio * item.cantidad) }}
-                    </p>
-                    <p v-if="item.cantidad > 1" class="text-[10px] text-gray-400">
-                      {{ formatoPrecio(item.producto.precio) }} c/u
-                    </p>
-                  </div>
                 </div>
               </div>
 
@@ -145,29 +132,13 @@ function procederAlPago() {
           v-if="carrito.items.length > 0"
           class="border-t border-gray-100 px-6 py-5 bg-white space-y-4"
         >
-          <!-- Resumen -->
-          <div class="space-y-2">
-            <div class="flex justify-between text-sm text-gray-500">
-              <span>Subtotal ({{ carrito.totalItems }} artículo{{ carrito.totalItems > 1 ? 's' : '' }})</span>
-              <span>{{ formatoPrecio(carrito.totalPrecio) }}</span>
-            </div>
-            <div v-if="carrito.totalAhorro > 0" class="flex justify-between text-sm">
-              <span class="text-green-600">Ahorro total</span>
-              <span class="text-green-600 font-medium">-{{ formatoPrecio(carrito.totalAhorro) }}</span>
-            </div>
-            <div class="flex justify-between text-base font-bold text-[#002B42] pt-2 border-t border-gray-100">
-              <span>Total</span>
-              <span>{{ formatoPrecio(carrito.totalPrecio) }}</span>
-            </div>
-          </div>
-
           <!-- Botones -->
           <button
             @click="procederAlPago"
             class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3.5 rounded-2xl font-bold text-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg shadow-md"
           >
             <Icon icon="mdi:whatsapp" class="text-xl" />
-            Proceder al pago por WhatsApp
+            Proceder por WhatsApp
           </button>
 
           <div class="flex gap-3">

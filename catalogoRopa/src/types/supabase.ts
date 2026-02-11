@@ -42,8 +42,6 @@ export interface Database {
         Row: {
           id: string
           nombre: string
-          precio: number
-          precio_anterior: number | null
           descripcion: string | null
           imagen_url: string
           tallas: string[]
@@ -51,14 +49,13 @@ export interface Database {
           en_oferta: boolean
           es_nuevo: boolean
           categoria_id: string
+          subcategorias: string[]
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           nombre: string
-          precio: number
-          precio_anterior?: number | null
           descripcion?: string | null
           imagen_url: string
           tallas?: string[]
@@ -66,14 +63,13 @@ export interface Database {
           en_oferta?: boolean
           es_nuevo?: boolean
           categoria_id: string
+          subcategorias?: string[]
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           nombre?: string
-          precio?: number
-          precio_anterior?: number | null
           descripcion?: string | null
           imagen_url?: string
           tallas?: string[]
@@ -81,6 +77,7 @@ export interface Database {
           en_oferta?: boolean
           es_nuevo?: boolean
           categoria_id?: string
+          subcategorias?: string[]
           created_at?: string
           updated_at?: string
         }

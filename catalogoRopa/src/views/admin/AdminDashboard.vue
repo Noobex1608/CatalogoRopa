@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { servicioAuth, usuarioActual } from '../../services/servicioAuth'
 import { servicioAdminProductos } from '../../services/servicioAdminProductos'
 import { servicioCategorias } from '../../services/servicioCatalogo'
+import { obtenerSubcategoriasPorSlug } from '../../constants/subcategorias'
 import type { Producto, Categoria } from '../../types/supabase'
 import type { Database } from '../../types/supabase'
 
@@ -27,15 +28,14 @@ const guardando = ref(false)
 
 const formDefaults = {
   nombre: '',
-  precio: 0,
-  precio_anterior: null as number | null,
   descripcion: '',
   imagen_url: '',
   tallas: [] as string[],
   colores: [] as string[],
   en_oferta: false,
   es_nuevo: false,
-  categoria_id: ''
+  categoria_id: '',
+  subcategorias: [] as string[]
 }
 const form = ref({ ...formDefaults })
 const tallasInput = ref('')
@@ -72,6 +72,32 @@ const totalProductos = computed(() => productos.value.length)
 
 function categoriaNombre(id: string): string {
   return categorias.value.find(c => c.id === id)?.nombre ?? 'Sin categoría'
+}
+
+const categoriaSeleccionada = computed(() =>
+  categorias.value.find((c) => c.id === form.value.categoria_id) ?? null
+)
+
+const subcategoriasDisponibles = computed(() =>
+  obtenerSubcategoriasPorSlug(categoriaSeleccionada.value?.slug ?? categoriaSeleccionada.value?.nombre)
+)
+
+watch(
+  () => form.value.categoria_id,
+  () => {
+    const disponibles = subcategoriasDisponibles.value
+    form.value.subcategorias = form.value.subcategorias.filter((s) => disponibles.includes(s))
+  }
+)
+
+function setEnOferta(checked: boolean) {
+  form.value.en_oferta = checked
+  if (checked) form.value.es_nuevo = false
+}
+
+function setEsNuevo(checked: boolean) {
+  form.value.es_nuevo = checked
+  if (checked) form.value.en_oferta = false
 }
 
 /* ───── Carga de datos ───── */
@@ -118,15 +144,14 @@ function abrirEditar(producto: Producto) {
   productoEditandoId.value = producto.id
   form.value = {
     nombre: producto.nombre,
-    precio: producto.precio,
-    precio_anterior: producto.precio_anterior,
     descripcion: producto.descripcion ?? '',
     imagen_url: producto.imagen_url,
     tallas: [...producto.tallas],
     colores: [...producto.colores],
     en_oferta: producto.en_oferta,
     es_nuevo: producto.es_nuevo,
-    categoria_id: producto.categoria_id
+    categoria_id: producto.categoria_id,
+    subcategorias: producto.subcategorias ?? []
   }
   tallasInput.value = producto.tallas.join(', ')
   coloresInput.value = producto.colores.join(', ')
@@ -138,7 +163,6 @@ async function guardarProducto() {
 
   // Validación básica
   if (!form.value.nombre.trim()) { error.value = 'El nombre es obligatorio'; return }
-  if (form.value.precio <= 0) { error.value = 'El precio debe ser mayor a 0'; return }
   if (!form.value.imagen_url.trim()) { error.value = 'La URL de imagen es obligatoria'; return }
   if (!form.value.categoria_id) { error.value = 'Selecciona una categoría'; return }
 
@@ -157,15 +181,14 @@ async function guardarProducto() {
   try {
     const datos: ProductoInsert = {
       nombre: form.value.nombre.trim(),
-      precio: form.value.precio,
-      precio_anterior: form.value.precio_anterior || null,
       descripcion: form.value.descripcion.trim() || null,
       imagen_url: form.value.imagen_url.trim(),
       tallas,
       colores,
       en_oferta: form.value.en_oferta,
       es_nuevo: form.value.es_nuevo,
-      categoria_id: form.value.categoria_id
+      categoria_id: form.value.categoria_id,
+      subcategorias: form.value.subcategorias
     }
 
     if (modoEdicion.value && productoEditandoId.value) {
@@ -235,9 +258,6 @@ onMounted(() => {
   cargarDatos()
 })
 
-function formatoPrecio(precio: number): string {
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(precio)
-}
 </script>
 
 <template>
@@ -357,7 +377,6 @@ function formatoPrecio(precio: number): string {
               <tr class="border-b border-gray-700/50 text-gray-400">
                 <th class="text-left py-4 px-4 font-medium">Producto</th>
                 <th class="text-left py-4 px-4 font-medium hidden md:table-cell">Categoría</th>
-                <th class="text-right py-4 px-4 font-medium">Precio</th>
                 <th class="text-center py-4 px-4 font-medium hidden lg:table-cell">Tallas</th>
                 <th class="text-center py-4 px-4 font-medium hidden sm:table-cell">Estado</th>
                 <th class="text-right py-4 px-4 font-medium">Acciones</th>
@@ -394,14 +413,15 @@ function formatoPrecio(precio: number): string {
                   <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#009DAE]/10 text-[#4DBCC8]">
                     {{ categoriaNombre(producto.categoria_id) }}
                   </span>
-                </td>
-
-                <!-- Precio -->
-                <td class="py-3 px-4 text-right">
-                  <p class="font-semibold text-white">{{ formatoPrecio(producto.precio) }}</p>
-                  <p v-if="producto.precio_anterior" class="text-gray-500 text-xs line-through">
-                    {{ formatoPrecio(producto.precio_anterior) }}
-                  </p>
+                  <div v-if="producto.subcategorias?.length" class="mt-1 flex flex-wrap gap-1">
+                    <span
+                      v-for="sub in producto.subcategorias"
+                      :key="sub"
+                      class="px-1.5 py-0.5 bg-white/5 text-gray-400 text-[10px] rounded"
+                    >
+                      {{ sub }}
+                    </span>
+                  </div>
                 </td>
 
                 <!-- Tallas -->
@@ -518,34 +538,6 @@ function formatoPrecio(precio: number): string {
                 />
               </div>
 
-              <!-- Precio + Precio anterior -->
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-1.5">Precio (COP) *</label>
-                  <input
-                    v-model.number="form.precio"
-                    type="number"
-                    min="0"
-                    step="any"
-                    lang="es"
-                    placeholder="Ej: 29990"
-                    class="w-full px-4 py-2.5 bg-[#0a1628] border border-gray-600/50 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#009DAE]/50 focus:border-[#009DAE] text-sm"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-1.5">Precio anterior</label>
-                  <input
-                    v-model.number="form.precio_anterior"
-                    type="number"
-                    min="0"
-                    step="any"
-                    lang="es"
-                    placeholder="Dejar vacío si no aplica"
-                    class="w-full px-4 py-2.5 bg-[#0a1628] border border-gray-600/50 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#009DAE]/50 focus:border-[#009DAE] text-sm"
-                  />
-                </div>
-              </div>
-
               <!-- Descripción -->
               <div>
                 <label class="block text-sm font-medium text-gray-300 mb-1.5">Descripción</label>
@@ -606,6 +598,27 @@ function formatoPrecio(precio: number): string {
                 </select>
               </div>
 
+              <!-- Subcategorías -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1.5">Subcategorías</label>
+                <div v-if="subcategoriasDisponibles.length" class="flex flex-wrap gap-2">
+                  <label
+                    v-for="sub in subcategoriasDisponibles"
+                    :key="sub"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-600/50 bg-[#0a1628] text-sm text-gray-300 cursor-pointer hover:border-[#009DAE]/70"
+                  >
+                    <input
+                      v-model="form.subcategorias"
+                      type="checkbox"
+                      :value="sub"
+                      class="w-4 h-4 rounded bg-[#0a1628] border-gray-600 text-[#009DAE] focus:ring-[#009DAE] focus:ring-offset-0"
+                    />
+                    <span>{{ sub }}</span>
+                  </label>
+                </div>
+                <p v-else class="text-xs text-gray-500">Selecciona una categoría para ver sus subcategorías.</p>
+              </div>
+
               <!-- Tallas + Colores -->
               <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -634,16 +647,18 @@ function formatoPrecio(precio: number): string {
               <div class="flex gap-6">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
-                    v-model="form.en_oferta"
                     type="checkbox"
+                    :checked="form.en_oferta"
+                    @change="setEnOferta(($event.target as HTMLInputElement).checked)"
                     class="w-4 h-4 rounded bg-[#0a1628] border-gray-600 text-[#009DAE] focus:ring-[#009DAE] focus:ring-offset-0"
                   />
                   <span class="text-sm text-gray-300">En oferta</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
-                    v-model="form.es_nuevo"
                     type="checkbox"
+                    :checked="form.es_nuevo"
+                    @change="setEsNuevo(($event.target as HTMLInputElement).checked)"
                     class="w-4 h-4 rounded bg-[#0a1628] border-gray-600 text-[#009DAE] focus:ring-[#009DAE] focus:ring-offset-0"
                   />
                   <span class="text-sm text-gray-300">Es nuevo</span>

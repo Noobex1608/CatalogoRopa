@@ -41,14 +41,13 @@ async function cargarProducto() {
       encontrado = {
         id: productoRemoto.id,
         nombre: productoRemoto.nombre,
-        precio: productoRemoto.precio,
-        precioAnterior: productoRemoto.precio_anterior ?? undefined,
         tallas: productoRemoto.tallas ?? [],
         colores: productoRemoto.colores ?? [],
         imagen: productoRemoto.imagen_url,
         descripcion: productoRemoto.descripcion ?? '',
         enOferta: productoRemoto.en_oferta,
-        esNuevo: productoRemoto.es_nuevo
+        esNuevo: productoRemoto.es_nuevo,
+        subcategorias: productoRemoto.subcategorias ?? []
       }
     }
   }
@@ -61,17 +60,9 @@ async function cargarProducto() {
   cargando.value = false
 }
 
-const descuento = computed(() => {
-  if (!producto.value?.precioAnterior) return 0
-  return Math.round(
-    ((producto.value.precioAnterior - producto.value.precio) / producto.value.precioAnterior) * 100
-  )
-})
-
 const mensajeWhatsApp = computed(() => {
   if (!producto.value) return ''
   const texto = `Hola! Me interesa la *${producto.value.nombre}*\n\n` +
-    `- Precio: $${producto.value.precio}\n` +
     `- Talla: ${tallaSeleccionada.value}\n` +
     `- Color: ${colorSeleccionado.value}\n\n` +
     `Esta disponible?`
@@ -137,8 +128,8 @@ watch(() => route.params.id, cargarProducto)
                 <span v-if="producto.esNuevo" class="bg-white/90 backdrop-blur-md text-gray-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm border border-gray-100">
                   Nuevo
                 </span>
-                <span v-if="producto.enOferta && descuento > 0" class="bg-red-500 text-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
-                  -{{ descuento }}%
+                <span v-if="producto.enOferta" class="bg-amber-500 text-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm">
+                  En oferta
                 </span>
               </div>
 
@@ -168,15 +159,6 @@ watch(() => route.params.id, cargarProducto)
                 <p class="text-gray-500 leading-relaxed mb-8">
                   {{ producto.descripcion }}
                 </p>
-
-                <!-- Precio -->
-                <div class="flex items-baseline gap-3 mb-8">
-                  <span class="text-4xl font-black text-[#002B42]">${{ producto.precio.toFixed(2) }}</span>
-                  <span v-if="producto.precioAnterior" class="text-lg text-gray-400 line-through">${{ producto.precioAnterior.toFixed(2) }}</span>
-                  <span v-if="descuento > 0" class="text-sm font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-md">
-                    Ahorras ${{ (producto.precioAnterior! - producto.precio).toFixed(2) }}
-                  </span>
-                </div>
 
                 <!-- Selector de color -->
                 <div class="mb-6">
@@ -256,10 +238,6 @@ watch(() => route.params.id, cargarProducto)
                 <div class="flex items-center gap-3 text-sm text-gray-500">
                   <Icon icon="mdi:shield-check-outline" class="text-[#009DAE] text-xl" />
                   <span>Calidad garantizada</span>
-                </div>
-                <div class="flex items-center gap-3 text-sm text-gray-500">
-                  <Icon icon="mdi:swap-horizontal" class="text-[#009DAE] text-xl" />
-                  <span>Cambios y devoluciones</span>
                 </div>
                 <div class="flex items-center gap-3 text-sm text-gray-500">
                   <Icon icon="mdi:credit-card-outline" class="text-[#009DAE] text-xl" />

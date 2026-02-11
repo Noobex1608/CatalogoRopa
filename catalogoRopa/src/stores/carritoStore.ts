@@ -18,18 +18,6 @@ export const useCarritoStore = defineStore('carrito', () => {
     items.value.reduce((sum, item) => sum + item.cantidad, 0)
   )
 
-  const totalPrecio = computed(() =>
-    items.value.reduce((sum, item) => sum + item.producto.precio * item.cantidad, 0)
-  )
-
-  const totalAhorro = computed(() =>
-    items.value.reduce((sum, item) => {
-      if (item.producto.precioAnterior) {
-        return sum + (item.producto.precioAnterior - item.producto.precio) * item.cantidad
-      }
-      return sum
-    }, 0)
-  )
 
   /* ─── Acciones ─── */
   function agregarItem(producto: Camisa, talla: string, color: string, cantidad = 1) {
@@ -84,19 +72,11 @@ export const useCarritoStore = defineStore('carrito', () => {
       mensaje += `   - Talla: ${item.talla}\n`
       mensaje += `   - Color: ${item.color}\n`
       mensaje += `   - Cantidad: ${item.cantidad}\n`
-      mensaje += `   - Precio: $${item.producto.precio.toFixed(2)} c/u\n`
-      if (item.cantidad > 1) {
-        mensaje += `   - Subtotal: $${(item.producto.precio * item.cantidad).toFixed(2)}\n`
-      }
       mensaje += '\n'
     })
 
     mensaje += '------------------------\n'
     mensaje += `*Total articulos:* ${totalItems.value}\n`
-    if (totalAhorro.value > 0) {
-      mensaje += `*Ahorro total:* $${totalAhorro.value.toFixed(2)}\n`
-    }
-    mensaje += `*TOTAL A PAGAR:* $${totalPrecio.value.toFixed(2)}\n\n`
     mensaje += 'Esta disponible mi pedido?'
 
     return `https://wa.me/523355550000?text=${encodeURIComponent(mensaje)}`
@@ -106,8 +86,6 @@ export const useCarritoStore = defineStore('carrito', () => {
     items,
     abierto,
     totalItems,
-    totalPrecio,
-    totalAhorro,
     agregarItem,
     eliminarItem,
     actualizarCantidad,
